@@ -36,15 +36,18 @@
     --radius: 14px;
 }
 
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; overflow-x: clip; }
 
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     color: var(--text);
     line-height: 1.65;
     background: var(--paper);
-    overflow-x: hidden;
+    overflow-x: clip;
+    /* When a modal is open, JS sets `body.modal-open` to lock scroll
+       across all viewports (avoids the iOS rubber-band scroll). */
 }
+body.modal-open { overflow: hidden; }
 
 @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
@@ -536,6 +539,34 @@ section { padding: 5.5rem 0; }
 .campus-list-item h4 { color: var(--ink); font-size: 0.98rem; margin-bottom: 0.25rem; font-family: 'Fraunces', serif; }
 .campus-list-item p { color: var(--text-muted); font-size: 0.85rem; }
 
+/* Photo card variant — used for click-to-zoom lightbox */
+.campus-list-item-photo {
+    position: relative;
+    overflow: hidden;
+    padding: 0;
+    border: 1px solid var(--line);
+    text-decoration: none;
+    color: inherit;
+    cursor: zoom-in;
+    aspect-ratio: 16 / 10;
+    background: var(--ink);
+}
+.campus-list-item-photo img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
+.campus-list-item-photo:hover img { transform: scale(1.05); }
+.campus-photo-overlay {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: linear-gradient(0deg, rgba(10,37,64,0.7) 0%, rgba(10,37,64,0.0) 60%);
+    color: white;
+    font-size: 0.88rem;
+    gap: 0.3rem;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+.campus-list-item-photo:hover .campus-photo-overlay,
+.campus-list-item-photo:focus-visible .campus-photo-overlay { opacity: 1; }
+.campus-photo-overlay i { font-size: 1.4rem; margin-bottom: 0.2rem; }
+
 /* ============ TESTIMONIALS ============ */
 .testimonials { display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap: 1.6rem; }
 .testimonial-card {
@@ -650,6 +681,15 @@ section { padding: 5.5rem 0; }
     min-height: 380px;
 }
 .location-map-wrap iframe { width: 100%; height: 100%; min-height: 380px; border: 0; display: block; }
+.map-open-btn {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    margin-top: 0.9rem;
+    padding: 0.7rem 1.1rem;
+    background: var(--ink); color: white;
+    border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 0.9rem;
+    transition: background 0.2s;
+}
+.map-open-btn:hover { background: var(--ink-2); }
 
 .location-card {
     background: var(--paper-2);
@@ -734,7 +774,7 @@ footer { background: var(--ink); color: white; padding: 4rem 0 1.5rem; }
     justify-content: center;
     padding: 1.2rem;
 }
-.modal.active { display: flex; }
+.modal.active { display: flex; animation: modalFadeIn 0.2s ease-out; }
 .modal-content {
     background: white;
     padding: 2.2rem;
@@ -757,6 +797,12 @@ footer { background: var(--ink); color: white; padding: 4rem 0 1.5rem; }
 .course-details ul li { margin-bottom: 0.45rem; }
 .modal-body-top { color: var(--text-muted); font-size: 0.92rem; }
 .modal-body-top strong { color: var(--ink); }
+
+/* Lightbox — image-only modal */
+.lightbox-content { padding: 0; max-width: 920px; background: transparent; box-shadow: none; }
+.lightbox-content img { width: 100%; height: auto; max-height: 85vh; object-fit: contain; border-radius: 12px; display: block; }
+.lightbox-content .close-btn { position: absolute; top: -14px; right: -14px; background: white; border-radius: 50%; width: 38px; height: 38px; box-shadow: var(--shadow-soft); font-size: 1rem; }
+.lightbox-content { position: relative; }
 
 /* ============ CHAT WIDGET ============ */
 .chat-window {
@@ -821,6 +867,18 @@ footer { background: var(--ink); color: white; padding: 4rem 0 1.5rem; }
 .chat-input input:focus { outline: none; border-color: var(--sky); }
 .chat-input button { background: var(--ink); color: white; border: none; padding: 0.8rem 1.1rem; border-radius: 8px; cursor: pointer; font-weight: 600; }
 .chat-input button:hover { background: var(--gold-deep); }
+.chat-send-btn { display: inline-flex; align-items: center; justify-content: center; }
+.chat-send-btn i { font-size: 0.95rem; }
+.chat-handoff-cta { align-self: center; margin: 0.3rem 0 0.3rem; }
+.chat-handoff-btn {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: #25D366; color: white;
+    padding: 0.65rem 1.1rem; border-radius: 999px;
+    text-decoration: none; font-weight: 700; font-size: 0.88rem;
+    box-shadow: 0 4px 14px rgba(37, 211, 102, 0.35);
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+.chat-handoff-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(37, 211, 102, 0.5); }
 .chat-whatsapp-cta {
     margin: 0 1rem 1rem;
     text-align: center;
@@ -889,11 +947,27 @@ footer { background: var(--ink); color: white; padding: 4rem 0 1.5rem; }
     .table-header, .table-row { grid-template-columns: 1fr; }
     .table-header { display: none; }
     .table-row { grid-template-columns: 1fr; gap: 0.3rem; padding: 1.2rem; }
-    .chat-window { width: 92vw; height: 65vh; bottom: 96px; right: 4vw; }
-    .modal-content { padding: 1.6rem; }
+    .modal-content { padding: 1.2rem; max-height: 92vh; border-radius: 16px 16px 0 0; }
+    .modal { align-items: flex-end; padding: 0; }
+    .modal-content { animation: modalSlideUp 0.28s ease-out; }
     .hero-stats { flex-wrap: wrap; gap: 1.4rem; }
-    .campus-list { flex-direction: row; overflow-x: auto; }
+    .campus-list-wrap { margin: 0 -1.2rem; padding: 0 1.2rem; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .campus-list { flex-direction: row; }
     .campus-list-item { min-width: 220px; }
+    /* Stop grid children from blowing out the viewport on mobile */
+    .course-card, .testimonial-card, .infrastructure-item, .stat-box { min-width: 0; }
+    /* Contain decorative SVGs so the pulse-divider never bleeds past viewport */
+    .pulse-divider { max-width: 100vw; overflow: hidden; }
+}
+
+@keyframes modalSlideUp {
+    from { transform: translateY(100%); }
+    to   { transform: translateY(0); }
+}
+
+@keyframes modalFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
 }
 
 @media (max-width: 480px) {

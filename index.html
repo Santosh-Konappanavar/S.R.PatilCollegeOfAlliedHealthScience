@@ -96,7 +96,7 @@
                 <img src="images/logo.png" alt="S R Patil College of Allied Health Science logo" class="logo-img">
                 <div>
                     <div class="college-name">S R Patil College</div>
-                    <div class="college-tagline">Allied Health Science</div>
+                    <div class="college-tagline">of Allied Health Science</div>
                 </div>
             </a>
             <nav id="mainNav">
@@ -326,7 +326,7 @@
         </div>
         <div class="campus-showcase">
             <div class="campus-main">
-                <img src="images/Collegeimage.jpg" alt="S R Patil College of Allied Health Science campus building, Badagandi" loading="lazy">
+                <img src="images/Collegeimage.jpg" alt="S R Patil College of Allied Health Science campus building, Badagandi" loading="lazy" onclick="openLightbox('images/Collegeimage.jpg', 'S R Patil College of Allied Health Science campus building, Badagandi')" style="cursor: zoom-in;">
                 <div class="campus-main-caption">
                     <span class="eyebrow">Main Campus</span>
                     <h3>Badagandi, Bilagi Taluk</h3>
@@ -354,13 +354,13 @@
                         <p>Accommodation for students coming from outside Bagalkot district.</p>
                     </div>
                 </div>
-                <div class="campus-list-item">
-                    <div class="campus-list-icon"><i class="fas fa-camera"></i></div>
-                    <div>
-                        <h4>More photos coming soon</h4>
-                        <p>We're adding a full photo gallery of labs, classrooms, and campus life.</p>
+                <a class="campus-list-item campus-list-item-photo" href="images/campus.jpeg" onclick="event.preventDefault(); openLightbox('images/campus.jpeg', 'Campus view, S R Patil College of Allied Health Science, Badagandi')" aria-label="Open campus photo in lightbox">
+                    <img src="images/campus.jpeg" alt="Campus view, S R Patil College of Allied Health Science, Badagandi" loading="lazy">
+                    <div class="campus-photo-overlay">
+                        <i class="fas fa-expand"></i>
+                        <span>View campus</span>
                     </div>
-                </div>
+                </a>
             </div>
         </div>
     </div>
@@ -504,11 +504,14 @@
         <div class="location-grid">
             <div class="location-map-wrap">
                 <iframe
-                    src="https://www.google.com/maps?q=S+R+Patil+Education+Foundation+Badagandi+Bilagi+Bagalkot+Karnataka+587116&output=embed"
+                    src="https://maps.google.com/maps?q=16.2333,75.6833&z=17&output=embed"
                     title="Map showing S R Patil College of Allied Health Science, Badagandi"
                     loading="lazy"
                     referrerpolicy="no-referrer-when-downgrade"
                     allowfullscreen></iframe>
+                <a class="map-open-btn" href="https://www.google.com/maps?q=16.2333,75.6833&z=17" target="_blank" rel="noopener" aria-label="Open exact location in Google Maps">
+                    <i class="fas fa-diamond-turn-right"></i> Open exact location in Google Maps
+                </a>
             </div>
             <div class="location-card">
                 <div class="location-row">
@@ -536,7 +539,7 @@
                     <div class="location-icon"><i class="fas fa-diamond-turn-right"></i></div>
                     <div>
                         <h4>Directions</h4>
-                        <a href="https://www.google.com/maps/dir/?api=1&destination=S+R+Patil+Education+Foundation+Badagandi+Bilagi+Bagalkot+Karnataka+587116" target="_blank" rel="noopener">Get directions on Google Maps</a>
+                        <a href="https://www.google.com/maps/dir/?api=1&destination=16.2333,75.6833" target="_blank" rel="noopener">Get directions on Google Maps</a>
                     </div>
                 </div>
             </div>
@@ -597,6 +600,36 @@
     <a class="float-btn whatsapp-btn" href="https://wa.me/918217771352?text=Hi!%20I%20want%20to%20know%20more%20about%20S%20R%20Patil%20College%20of%20Allied%20Health%20Science%20programs%20and%20admissions." target="_blank" rel="noopener" title="Chat on WhatsApp" aria-label="Chat on WhatsApp">
         <i class="fab fa-whatsapp"></i>
     </a>
+    <button class="float-btn chat-btn" id="liveChatBtn" onclick="toggleLiveChat()" title="Live chat" aria-label="Open live chat">
+        <i class="fas fa-comments"></i>
+        <span class="ping" id="liveChatPing"></span>
+    </button>
+</div>
+
+<div class="chat-window" id="liveChatWindow" role="dialog" aria-label="Live chat with admissions">
+    <div class="chat-header">
+        <div class="chat-header-title"><span class="dot"></span> Live Chat — Admissions</div>
+        <button class="close-btn" onclick="toggleLiveChat()" aria-label="Close chat">✕</button>
+    </div>
+    <div class="chat-notice" id="chatNotice">Chat with our admissions team. Send a message below — it goes straight to WhatsApp, where we reply in real time.</div>
+    <div class="chat-messages" id="chatMessages">
+        <div class="message bot">👋 Hi! Welcome to S R Patil College of Allied Health Science. Ask about courses, fees, admissions, hostel, placements, or location. Or pick a quick topic below.</div>
+    </div>
+    <div class="chat-quick-replies">
+        <button class="chat-quick-reply" data-q="What courses do you offer?">📚 Courses</button>
+        <button class="chat-quick-reply" data-q="What are the fees?">💰 Fees</button>
+        <button class="chat-quick-reply" data-q="How do I apply for admission?">📝 Admission</button>
+        <button class="chat-quick-reply" data-q="Where is the college located?">📍 Location</button>
+        <button class="chat-quick-reply" data-q="Is hostel facility available?">🏠 Hostel</button>
+        <button class="chat-quick-reply" data-q="Do you provide placement support?">💼 Placements</button>
+    </div>
+    <div class="chat-input">
+        <input type="text" id="chatInput" placeholder="Type your message..." aria-label="Type your message">
+        <button class="chat-send-btn" onclick="sendLiveChatMessage()" aria-label="Send message">
+            <i class="fas fa-paper-plane"></i>
+        </button>
+    </div>
+    <div class="chat-whatsapp-cta">Powered by WhatsApp · your message opens WhatsApp so we can reply in real time.</div>
 </div>
 
 <div id="courseModal" class="modal">
@@ -607,6 +640,13 @@
         </div>
         <p class="modal-body-top" id="modalMeta" style="margin-bottom:1rem; font-family: 'JetBrains Mono', monospace; font-size:0.82rem; color: var(--gold-deep);"></p>
         <div id="modalBody"></div>
+    </div>
+</div>
+
+<div id="lightbox" class="modal" role="dialog" aria-label="Image preview">
+    <div class="modal-content lightbox-content">
+        <button class="close-btn" onclick="closeLightbox()" aria-label="Close image preview">✕</button>
+        <img id="lightboxImg" src="" alt="">
     </div>
 </div>
 

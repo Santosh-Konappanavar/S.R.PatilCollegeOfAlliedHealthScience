@@ -143,11 +143,37 @@ function showCourseDetails(courseId) {
     document.getElementById('modalMeta').innerHTML = course.meta;
     document.getElementById('modalBody').innerHTML = course.content;
     document.getElementById('courseModal').classList.add('active');
-    document.body.style.overflow = 'hidden';
+    setBodyScroll();
 }
 function closeCourseModal() {
     document.getElementById('courseModal').classList.remove('active');
-    document.body.style.overflow = '';
+    setBodyScroll();
+}
+
+/* ---------------- Image lightbox ---------------- */
+function openLightbox(src, alt) {
+    const lb = document.getElementById('lightbox');
+    if (!lb) return;
+    document.getElementById('lightboxImg').src = src;
+    document.getElementById('lightboxImg').alt = alt || '';
+    lb.classList.add('active');
+    setBodyScroll();
+}
+function closeLightbox() {
+    const lb = document.getElementById('lightbox');
+    if (!lb) return;
+    lb.classList.remove('active');
+    setBodyScroll();
+}
+
+/* Body-scroll coordination: instead of every open/close path
+   setting `body.style.overflow` directly (which desyncs when
+   multiple modals are open in sequence), this single helper
+   inspects whether ANY modal or the admin dashboard is currently
+   active and locks the body accordingly. */
+function setBodyScroll() {
+    const anyActive = document.querySelector('.modal.active, .admin-dashboard.active');
+    document.body.classList.toggle('modal-open', !!anyActive);
 }
 
 
@@ -230,15 +256,17 @@ function openAdminLogin() {
         showAdminDashboard();
     } else {
         document.getElementById('adminLoginModal').classList.add('active');
+        setBodyScroll();
     }
 }
 function closeAdminLogin() {
     document.getElementById('adminLoginModal').classList.remove('active');
     document.getElementById('adminLoginError').style.display = 'none';
+    setBodyScroll();
 }
 function showAdminDashboard() {
     document.getElementById('adminDashboard').classList.add('active');
-    document.body.style.overflow = 'hidden';
+    setBodyScroll();
     updateAdminStats();
     renderInquiries();
 }
@@ -247,7 +275,7 @@ function showAdminDashboard() {
 document.addEventListener('click', function (e) {
     if (e.target && e.target.classList && e.target.classList.contains('modal')) {
         e.target.classList.remove('active');
-        document.body.style.overflow = '';
+        setBodyScroll();
     }
 });
 document.addEventListener('keydown', function (e) {
@@ -255,7 +283,7 @@ document.addEventListener('keydown', function (e) {
         document.querySelectorAll('.modal.active, .admin-dashboard.active').forEach(el => {
             el.classList.remove('active');
         });
-        document.body.style.overflow = '';
+        setBodyScroll();
     }
 });
 
@@ -270,7 +298,7 @@ document.addEventListener('keydown', function (e) {
 function logoutAdmin() {
     sessionStorage.removeItem('adminLoggedIn');
     document.getElementById('adminDashboard').classList.remove('active');
-    document.body.style.overflow = '';
+    setBodyScroll();
     document.getElementById('adminUsername').value = '';
     document.getElementById('adminPassword').value = '';
 }
@@ -337,6 +365,111 @@ function openWhatsApp() {
     const message = 'Hi! I want to know more about S R Patil College of Allied Health Science programs and admissions.';
     window.open(`https://wa.me/${COLLEGE_WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, '_blank');
 }
+
+/* ---------------- Live chat widget ----------------
+   A built-in, no-service chat that:
+   • Shows a floating chat bubble in the bottom-right.
+   • Lets visitors type a question or tap a quick-reply.
+   • Shows an instant FAQ answer for common topics.
+   • On "Send" (or after the user picks "Talk to a real person"),
+     opens WhatsApp with the full conversation as a pre-filled
+     message — so the visitor reaches a real human on WhatsApp
+     in one tap. This works without any third-party service or
+     signup. */
+const liveChatFAQ = [
+    { keys: ['course', 'program', 'b.sc', 'bsc'], reply: 'We offer four B.Sc. programs: AOTT (Anaesthesia & OT Technology), MLT (Medical Laboratory Technology), MIT (Medical Imaging Technology) and Optometry — each 3 years plus a 6-month clinical internship. Tap "Courses" in the menu for full details.' },
+    { keys: ['fee', 'fees', 'cost', 'price', 'tuition'], reply: 'Fee structures vary by program. Our admissions team can share the exact fee breakdown on WhatsApp — pick "Talk to a real person" below or tap the WhatsApp button.' },
+    { keys: ['admission', 'apply', 'eligibility', 'eligib'], reply: 'Admission requires a 12th Pass with Physics, Chemistry and Biology. You can apply right now using the Admission Inquiry form on this page — it takes under a minute.' },
+    { keys: ['location', 'address', 'where', 'map'], reply: 'We\'re on NH-218, Hubli–Vijayapur–Gulbarga Road, Badagandi, Bilagi Taluk, Bagalkot District, Karnataka – 587116. Scroll to "Find Us" for the live map and directions.' },
+    { keys: ['hostel', 'accommodation', 'stay'], reply: 'Yes, on-campus hostel accommodation is available for students. Our admissions team can share current availability and fees on WhatsApp.' },
+    { keys: ['placement', 'job', 'career', 'internship'], reply: 'Every program includes a 6-month clinical internship and placement support through our affiliated hospital network. Ask our team for recent placement details on WhatsApp.' },
+    { keys: ['contact', 'phone', 'call', 'number'], reply: `You can reach us on WhatsApp using the green button, or call ${COLLEGE_PHONE_DISPLAY}.` }
+];
+
+const liveChatHistory = []; // conversation transcript that ships to WhatsApp
+
+function toggleLiveChat() {
+    const win = document.getElementById('liveChatWindow');
+    if (!win) return;
+    const isOpen = win.classList.toggle('active');
+    if (isOpen) {
+        // Stop the ping animation once the user has seen the chat
+        const ping = document.getElementById('liveChatPing');
+        if (ping) ping.style.display = 'none';
+        // Focus the input for fast typing
+        setTimeout(() => document.getElementById('chatInput').focus(), 200);
+    }
+}
+
+function appendLiveMessage(text, who) {
+    const messagesDiv = document.getElementById('chatMessages');
+    if (!messagesDiv) return;
+    const msg = document.createElement('div');
+    msg.className = 'message ' + who;
+    msg.textContent = text;
+    messagesDiv.appendChild(msg);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    liveChatHistory.push({ who, text });
+}
+
+function liveChatFAQReply(text) {
+    const lower = text.toLowerCase();
+    const match = liveChatFAQ.find(f => f.keys.some(k => lower.includes(k)));
+    if (match) return match.reply;
+    return null;
+}
+
+function sendLiveChatMessage(prefill) {
+    const input = document.getElementById('chatInput');
+    const text = (prefill || input.value).trim();
+    if (!text) return;
+    appendLiveMessage(text, 'user');
+    if (input) input.value = '';
+
+    setTimeout(() => {
+        const reply = liveChatFAQReply(text);
+        if (reply) {
+            appendLiveMessage(reply, 'bot');
+        } else {
+            // No FAQ match → offer the WhatsApp handoff so the visitor
+            // reaches a real person instead of dead-ending.
+            appendLiveMessage("I can answer quick FAQs, but for anything specific, our admissions team replies on WhatsApp. Tap below to send your question straight to them 👇", 'bot');
+            offerWhatsAppHandoff(text);
+        }
+    }, 350);
+}
+
+function offerWhatsAppHandoff(latestText) {
+    const messagesDiv = document.getElementById('chatMessages');
+    if (!messagesDiv) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'chat-handoff-cta';
+    const transcript = liveChatHistory.map(m => `${m.who === 'user' ? 'Visitor' : 'SRP'}: ${m.text}`).join('\n');
+    const fullMessage = `Hi! I'm messaging from the S R Patil College website.\n\n${latestText ? `My question: ${latestText}\n\n` : ''}Conversation so far:\n${transcript}`;
+    const url = `https://wa.me/${COLLEGE_WHATSAPP_NUMBER}?text=${encodeURIComponent(fullMessage)}`;
+    wrap.innerHTML = `<a class="chat-handoff-btn" href="${url}" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> Continue on WhatsApp</a>`;
+    messagesDiv.appendChild(wrap);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+function handleLiveChatKeypress(event) {
+    if (event.key === 'Enter') sendLiveChatMessage();
+}
+
+// Wire quick-reply buttons (delegated) + Enter key on input
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.chat-quick-reply').forEach(btn => {
+        btn.addEventListener('click', () => sendLiveChatMessage(btn.dataset.q));
+    });
+    const ci = document.getElementById('chatInput');
+    if (ci) ci.addEventListener('keypress', handleLiveChatKeypress);
+});
+// Also wire directly in case DOMContentLoaded already fired (script is at end of body)
+document.querySelectorAll('.chat-quick-reply').forEach(btn => {
+    btn.addEventListener('click', () => sendLiveChatMessage(btn.dataset.q));
+});
+const chatInputEl = document.getElementById('chatInput');
+if (chatInputEl) chatInputEl.addEventListener('keypress', handleLiveChatKeypress);
 
 
 /* ---------------- Brochure download (real PDF) ----------------
@@ -442,12 +575,20 @@ function generateBrochureHTML() {
 
 /* ---------------- Scroll reveal (subtle, respects reduced motion) ---------------- */
 if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches && 'IntersectionObserver' in window) {
-    const revealItems = document.querySelectorAll('.course-card, .infrastructure-item, .testimonial-card, .stat-box, .campus-list-item');
-    revealItems.forEach(el => {
+    const cardItems = document.querySelectorAll('.course-card, .infrastructure-item, .testimonial-card, .stat-box, .campus-list-item');
+    cardItems.forEach(el => {
         el.style.opacity = '0';
         el.style.transform = 'translateY(16px)';
         el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
     });
+
+    const sectionHeads = document.querySelectorAll('.section-head');
+    sectionHeads.forEach(el => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(8px)';
+        el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+    });
+
     const io = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
@@ -457,7 +598,8 @@ if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches && 'Intersect
             }
         });
     }, { threshold: 0.15 });
-    revealItems.forEach(el => io.observe(el));
+    cardItems.forEach(el => io.observe(el));
+    sectionHeads.forEach(el => io.observe(el));
 }
 
 /* ---------------- Header shadow on scroll ---------------- */
