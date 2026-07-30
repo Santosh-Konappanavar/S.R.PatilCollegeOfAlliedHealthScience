@@ -396,8 +396,15 @@ function toggleLiveChat() {
         // Stop the ping animation once the user has seen the chat
         const ping = document.getElementById('liveChatPing');
         if (ping) ping.style.display = 'none';
-        // Focus the input for fast typing
-        setTimeout(() => document.getElementById('chatInput').focus(), 200);
+        // Focus the input for fast typing — requestAnimationFrame is more
+        // reliable on mobile than setTimeout after a CSS transition.
+        requestAnimationFrame(() => {
+            const input = document.getElementById('chatInput');
+            if (input) input.focus({ preventScroll: true });
+        });
+        // Scroll chat to bottom so the greeting is visible
+        const messages = document.getElementById('chatMessages');
+        if (messages) messages.scrollTop = messages.scrollHeight;
     }
 }
 

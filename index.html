@@ -94,19 +94,21 @@
         <div class="header-content">
             <a href="#home" class="logo-section">
                 <img src="images/logo.png" alt="S R Patil College of Allied Health Science logo" class="logo-img">
-                <div>
+                <div class="logo-text">
                     <div class="college-name">S R Patil College</div>
                     <div class="college-tagline">of Allied Health Science</div>
+                    <div class="college-name-full">S R Patil College of Allied Health Science</div>
                 </div>
             </a>
             <nav id="mainNav">
+                <button class="nav-close-btn" onclick="toggleMenu()" aria-label="Close menu">✕</button>
                 <a href="#home">Home</a>
                 <a href="#about">About</a>
                 <a href="#courses">Courses</a>
                 <a href="#campus">Campus</a>
                 <a href="#testimonials">Testimonials</a>
                 <a href="#location">Find Us</a>
-                <button class="admin-btn" onclick="openAdminLogin()">Admin</button>
+                <button class="admin-btn" onclick="openAdminLogin(); document.querySelector('nav').classList.remove('open');">Admin</button>
                 <a href="#admission" class="nav-cta">Apply Now</a>
             </nav>
             <button class="hamburger" onclick="toggleMenu()" aria-label="Toggle menu">
